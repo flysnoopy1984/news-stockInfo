@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票业绩分析报告</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .report-dates {
+            text-align: center;
+            color: #7f8c8d;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        .report-dates div {
+            margin: 5px 0;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .section-title {
+            color: #2c3e50;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+            font-size: 0.9em;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .positive-change {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .negative-change {
+            color: #c0392b;
+            font-weight: bold;
+        }
+        .change-reason {
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .change-reason:hover {
+            white-space: normal;
+            overflow: visible;
+        }
+        .small-text {
+            font-size: 0.85em;
+        }
+        .date-info {
+            font-size: 0.55em;
+            font-weight: normal;
+            margin-left: 10px;
+        }
+        
+        /* 响应式布局设置 */
+        @media screen and (max-width: 768px) {
+            body {
+                margin: 10px;
+            }
+            .container {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .section-title {
+                font-size: 1.2em;
+            }
+            
+            /* 表格响应式处理 */
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr {
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                padding: 8px;
+                border-radius: 4px;
+            }
+            
+            td {
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+                border: none;
+                border-bottom: 1px solid #eee;
+                max-width: none;
+            }
+            
+            td:last-child {
+                border-bottom: none;
+            }
+            
+            td:before {
+                position: absolute;
+                left: 8px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                content: attr(data-label);
+            }
+            
+            /* 资金流相关样式调整 */
+            .fund-flow-container td {
+                padding-left: 50%;
+            }
+            
+            .fund-flow-header td {
+                padding-left: 8px;
+                text-align: center !important;
+            }
+            
+            .fund-flow-data-header {
+                display: none;
+            }
+            
+            /* 修复资金流表格在手机模式下的显示问题 */
+            .fund-flow-row td[colspan] {
+                padding-left: 50%;
+                text-align: right;
+            }
+            
+            .fund-flow-row td[colspan]:before {
+                position: absolute;
+                left: 8px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                content: attr(data-label);
+            }
+            
+            /* 确保资金流容器正确显示在手机模式下 */
+            .fund-flow-container {
+                margin-top: 0;
+                border: none;
+            }
+            
+            .fund-flow-container.table-row-group {
+                display: block;
+            }
+            
+            /* 调整资金流标题在手机模式下的样式 */
+            .fund-flow-header {
+                background-color: #f0f0f0;
+                text-align: center;
+                margin-bottom: 0;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+            
+            .fund-flow-header td {
+                text-align: center !important;
+                padding: 8px;
+                font-weight: bold;
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<!-- https://stockpage.10jqka.com.cn/301616/ -->
+<body>
+    <div class="container">
+        <h1>股票业绩分析报告</h1>
+        <div class="report-dates">
+            <!-- 日期信息将通过Python脚本动态生成 -->
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">业绩预告变动</h2>
+            <table id="high-change-table">
+                <thead>
+                    <tr>
+                        <th>股票代码</th>
+                        <th>股票名称</th>
+                        <th>预测指标</th>
+                        <th>变动幅度</th>
+                        <th>预测值(万元)</th>
+                        <th>上年同期值(万元)</th>
+                        <th>预告类型</th>
+                        <th>变动原因</th>
+                        <th>公告日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据将通过Python脚本动态生成 -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">业绩预告超预期股票</h2>
+            <table id="exceed-expect-table">
+                <thead>
+                    <tr>
+                        <th>股票代码</th>
+                        <th>股票名称</th>
+                        <th>上期预测值(万元)</th>
+                        <th>本期实际净利润(万元)</th>
+                        <th>超预期倍数</th>
+                        <th>预告类型</th>
+                        <th>预测指标</th>
+                        <th>公告日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据将通过Python脚本动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
