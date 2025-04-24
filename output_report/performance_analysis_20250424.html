@@ -1,0 +1,3279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票业绩分析报告</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .report-dates {
+            text-align: center;
+            color: #7f8c8d;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        .report-dates div {
+            margin: 5px 0;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .section-title {
+            color: #2c3e50;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+            font-size: 0.9em;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .positive-change {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .negative-change {
+            color: #c0392b;
+            font-weight: bold;
+        }
+        .change-reason {
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .change-reason:hover {
+            white-space: normal;
+            overflow: visible;
+        }
+        .small-text {
+            font-size: 0.85em;
+        }
+        .date-info {
+            font-size: 0.55em;
+            font-weight: normal;
+            margin-left: 10px;
+        }
+        
+        /* 响应式布局设置 */
+        @media screen and (max-width: 768px) {
+            body {
+                margin: 10px;
+            }
+            .container {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .section-title {
+                font-size: 1.2em;
+            }
+            
+            /* 表格响应式处理 */
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr {
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                padding: 8px;
+                border-radius: 4px;
+            }
+            
+            td {
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+                border: none;
+                border-bottom: 1px solid #eee;
+                max-width: none;
+            }
+            
+            td:last-child {
+                border-bottom: none;
+            }
+            
+            td:before {
+                position: absolute;
+                left: 8px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                content: attr(data-label);
+            }
+            
+            /* 资金流相关样式调整 */
+            .fund-flow-container td {
+                padding-left: 50%;
+            }
+            
+            .fund-flow-header td {
+                padding-left: 8px;
+                text-align: center !important;
+            }
+            
+            .fund-flow-data-header {
+                display: none;
+            }
+            
+            /* 修复资金流表格在手机模式下的显示问题 */
+            .fund-flow-row td[colspan] {
+                padding-left: 50%;
+                text-align: right;
+            }
+            
+            .fund-flow-row td[colspan]:before {
+                position: absolute;
+                left: 8px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                content: attr(data-label);
+            }
+            
+            /* 确保资金流容器正确显示在手机模式下 */
+            .fund-flow-container {
+                margin-top: 0;
+                border: none;
+            }
+            
+            .fund-flow-container.table-row-group {
+                display: block;
+            }
+            
+            /* 调整资金流标题在手机模式下的样式 */
+            .fund-flow-header {
+                background-color: #f0f0f0;
+                text-align: center;
+                margin-bottom: 0;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+            
+            .fund-flow-header td {
+                text-align: center !important;
+                padding: 8px;
+                font-weight: bold;
+                border-bottom: none;
+            }
+        }
+    </style>
+
+    <style>
+    .stock-main-row {
+        background-color: #f0f8ff !important;
+    }
+    .nested-table {
+        width: 100%;
+        margin: 0;
+        display: none;
+    }
+    .nested-table.visible {
+        display: table;
+    }
+    .fund-flow-row {
+        background-color: #f9f9f9;
+    }
+    /* PC端资金流样式 */
+    .fund-flow-row td {
+        font-size: 0.85em;
+        color: #666;
+        text-align: center;
+    }
+    .fund-flow-header {
+        font-weight: bold;
+        background-color: #f5f5f5 !important;
+        cursor: pointer;
+    }
+    .fund-flow-header td {
+        text-align: right !important;
+        font-size: 0.9em !important;
+        color: #333 !important;
+        padding: 8px !important;
+    }
+    .fund-flow-data-header {
+        background-color: #f5f5f5;
+        font-size: 0.85em;
+        color: #666;
+    }
+    .fund-flow-data-header td {
+        text-align: center;
+        padding: 6px !important;
+    }
+    .fund-inflow {
+        color: #d14836 !important;
+    }
+    .fund-outflow {
+        color: #093 !important;
+    }
+    .stock-link {
+        color: #333;
+        text-decoration: none;
+    }
+    .stock-link:hover {
+        text-decoration: underline;
+        color: #1a0dab;
+    }
+    
+    /* 确保PC端嵌套表格内容居中 */
+    .nested-table td {
+        text-align: center;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .nested-table {
+            display: none !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        .nested-table.visible {
+            display: table !important;
+        }
+        .nested-table tr {
+            display: table-row !important;
+            margin: 0 !important;
+            border: none !important;
+        }
+        .nested-table td {
+            display: table-cell !important;
+            padding: 6px !important;
+            text-align: right !important; /* 移动端保持右对齐 */
+            position: static !important;
+            border: 1px solid #ddd !important;
+        }
+        .nested-table td:first-child {
+            text-align: left !important;
+        }
+        .fund-flow-header td {
+            padding: 10px !important;
+            text-align: right !important;
+            background-color: #f5f5f5 !important;
+        }
+        .fund-flow-data-header {
+            display: table-row !important;
+        }
+        .fund-flow-data-header td {
+            background-color: #f9f9f9 !important;
+            text-align: center !important;
+            font-weight: bold !important;
+            padding: 8px !important;
+        }
+    }
+    </style>
+    <script>
+    function toggleFundFlow(stockCode) {
+        console.log('Toggle clicked for stock:', stockCode);
+        var nestedTable = document.querySelector(`table[data-stock="${stockCode}"]`);
+        console.log('Found nested table:', nestedTable);
+        
+        if (nestedTable) {
+            var isVisible = nestedTable.classList.contains('visible');
+            console.log('Current visibility:', isVisible);
+            nestedTable.classList.toggle('visible');
+            console.log('New visibility:', !isVisible);
+        }
+    }
+    </script>
+    
+</head>
+<!-- https://stockpage.10jqka.com.cn/301616/ -->
+<body>
+    <div class="container">
+        <h1>股票业绩分析报告</h1>
+        
+        
+        <div class="section">
+            <h2 class="section-title">业绩预告变动<span class="date-info">业绩预告分析期: 2025年03月31日</span></h2>
+            <table id="high-change-table">
+                <thead>
+                    <tr>
+                        <th>股票代码</th>
+                        <th>股票名称</th>
+                        <th>预测指标</th>
+                        <th>变动幅度</th>
+                        <th>预测值(万元)</th>
+                        <th>上年同期值(万元)</th>
+                        <th>预告类型</th>
+                        <th>变动原因</th>
+                        <th>公告日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002039/" target="_blank" class="stock-link">002039</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002039/" target="_blank" class="stock-link">黔源电力</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+347.50%</td>
+            <td data-label="预测值(万元)">5,062.02</td>
+            <td data-label="上年同期值(万元)">1,131.18</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">公司2025年第一季度来水较上年同期偏多62.70%。公司2025年一季度发电量为146,331.73万千瓦时,上年同期发电量为91,803.74万千瓦时,同比上升59.40%,使发电收入及发电利润增加。2025年一季度,普定水电站发电量为3,475.30万千瓦时,引子渡水电站发电量为11,103.50万千瓦时,鱼塘水电站发电量为2,404.17万千瓦时,清溪水电站发电量为543.61万千瓦时,牛都水电站发电量为345.42万千瓦时,光照水电站发电量为47,033.13万千瓦时,董箐水电站发电量为39,868.23万千瓦时,马马崖水电站发电量为24,415.48万千瓦时,善泥坡水电站发电量为7,118.00万千瓦时;光照光伏电站(岗坪光伏电站)发电量为2,818.03万千瓦时,马马崖光伏电站(永新光伏电站)发电量为4,097.80万千瓦时,董箐光伏电站(镇良光伏电站)发电量为1,712.73万千瓦时,镇宁坝草一期光伏电站发电量为1,396.33万千瓦时。</td>
+            <td data-label="公告日期">2025-04-18</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('002039')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="002039">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">831.45</td>
+                            <td>-160.23</td>
+                            <td>-671.22</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-984.40</td>
+                            <td>1,331.56</td>
+                            <td>-347.16</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-1,499.26</td>
+                            <td>1,025.02</td>
+                            <td>474.24</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-512.15</td>
+                            <td>96.55</td>
+                            <td>415.60</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">278.12</td>
+                            <td>449.98</td>
+                            <td>-728.10</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300899/" target="_blank" class="stock-link">300899</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300899/" target="_blank" class="stock-link">上海凯鑫</a></td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+293.85%</td>
+            <td data-label="预测值(万元)">1,925.00</td>
+            <td data-label="上年同期值(万元)">488.77</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">公司在2024年业绩快报中披露的相关订单,部分在2025年第一季度确认,订单金额较大,对一季度业绩有重大影响,导致公司2025年第一季度收入和净利润同比大幅增长。</td>
+            <td data-label="公告日期">2025-04-17</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('300899')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="300899">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-55.53</td>
+                            <td>218.84</td>
+                            <td>-163.31</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">135.42</td>
+                            <td>-206.24</td>
+                            <td>70.81</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">190.92</td>
+                            <td>116.23</td>
+                            <td>-307.16</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">1,359.69</td>
+                            <td>-849.16</td>
+                            <td>-510.53</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-553.13</td>
+                            <td>-1,136.03</td>
+                            <td>1,689.16</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002816/" target="_blank" class="stock-link">002816</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002816/" target="_blank" class="stock-link">和科达</a></td>
+            <td data-label="预测指标">营业收入</td>
+            <td data-label="变动幅度" class="positive-change">+764.56%</td>
+            <td data-label="预测值(万元)">3,585.00</td>
+            <td data-label="上年同期值(万元)">414.66</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">1、公司积极推进项目订单生产交付,报告期内营收规模大幅增加,净利润同比扭亏为盈。报告期内,公司通过优化客户结构,深化与核心客户的战略合作,在手订单显著增加,并积极推进生产交付,实现营业收入预计2,870万元至4,300万元,同比大幅增长;归属于上市公司股东的净利润预计228万元至340万元,实现扭亏为盈。业绩增长主要得益于市场需求提升带动订单大幅增长,产品价格体系稳定,以及规模效应下成本优势显现,推动毛利率同比提升。2、公司完善信息化建设,运营效率明显提升报告期内,公司成立专门信息化工作小组,加速推动公司信息化建设,提升企业运营效率,降低公司运营成本。结合公司业务的战略目标,公司积极管控成本支出,一方面,不断提高人均效能,降低人力成本;另一方面,通过加强对运营成本的精细化、节约化管理降低公司的其他各项成本费用。</td>
+            <td data-label="公告日期">2025-04-16</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('002816')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="002816">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-767.66</td>
+                            <td>545.73</td>
+                            <td>221.93</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">2,246.47</td>
+                            <td>-953.13</td>
+                            <td>-1,293.33</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-962.35</td>
+                            <td>983.49</td>
+                            <td>-21.13</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-167.73</td>
+                            <td>899.21</td>
+                            <td>-731.48</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">190.10</td>
+                            <td>88.74</td>
+                            <td>-278.85</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000039/" target="_blank" class="stock-link">000039</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000039/" target="_blank" class="stock-link">中集集团</a></td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+557.50%</td>
+            <td data-label="预测值(万元)">55,000.00</td>
+            <td data-label="上年同期值(万元)">8,363.50</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">本集团2025年1-3月的合并业绩较去年同期预计增长,主要原因为:2025年一季度本集团集装箱制造业务受益于2024年所接到的订单延续以及2024年同期的较低基数,该分部2025年一季度营业收入和净利润均较去年同期有所上升。此外,2025年一季度期间本集团根据汇率形势采取了更灵活的套期保值策略,平衡汇率风险与套保管理成本,持续优化套保策略有效性,因此本集团外汇衍生品相关损失较去年同期大幅降低。综合以上因素影响,本集团2025年1-3月归属于母公司股东及其他权益持有者的净利润较去年同期预计同向上升,并且非经常性损益项目较去年同期预计有所改善。</td>
+            <td data-label="公告日期">2025-04-16</td>
+        </tr>
+        
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603893/" target="_blank" class="stock-link">603893</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603893/" target="_blank" class="stock-link">瑞芯微</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+217.50%</td>
+            <td data-label="预测值(万元)">20,950.00</td>
+            <td data-label="上年同期值(万元)">6,601.00</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度,AIoT市场增长迅猛,各类机器人应用兴起,以Deepseek为代表的国内AI大模型技术开源化,为边缘侧、端侧的AIoT快速发展带来全新机遇。据我们观察,目前AIoT应用大部分在中国。报告期内,公司尽力解决中美角力产生的供应链封装障碍。公司发挥AIoT平台布局优势,在旗舰芯片RK3588带领下,AIoT各产品线保持高速增长,整体收入、毛利按预期增长,预计净利润2亿元~2.25亿元,同比增长约196%~233%。</td>
+            <td data-label="公告日期">2025-04-16</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('603893')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="603893">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-18,666.06</td>
+                            <td>19,127.95</td>
+                            <td>-461.90</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-4,436.87</td>
+                            <td>3,472.33</td>
+                            <td>964.54</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-10,321.79</td>
+                            <td>6,442.47</td>
+                            <td>3,879.32</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-12,020.33</td>
+                            <td>7,455.01</td>
+                            <td>4,565.32</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-10,633.61</td>
+                            <td>10,564.04</td>
+                            <td>69.56</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000791/" target="_blank" class="stock-link">000791</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000791/" target="_blank" class="stock-link">甘肃能源</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+859.60%</td>
+            <td data-label="预测值(万元)">47,400.00</td>
+            <td data-label="上年同期值(万元)">4,939.60</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">本报告期预计归属于上市公司股东的净利润同比增加(原报告数据),主要是2024年公司实施发行股份及支付现金购买资产并募集配套资金,常乐公司已于2024年11月正式纳入公司合并报表范围;预计归属于上市公司股东的净利润同比增加(重述后数据),主要是预计报告期内发电成本较上年同期有所下降。本报告期公司所属电站发电量74.62亿千瓦时,上年同期发电量71.96亿千瓦时(已合并常乐公司上年同期发电量),同比增加2.66亿千瓦时。</td>
+            <td data-label="公告日期">2025-04-15</td>
+        </tr>
+        
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600714/" target="_blank" class="stock-link">600714</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600714/" target="_blank" class="stock-link">金瑞矿业</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+659.59%</td>
+            <td data-label="预测值(万元)">1,515.83</td>
+            <td data-label="上年同期值(万元)">199.56</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">主营业务影响。报告期内,公司主营业务产品碳酸锶市场价格同比大幅上涨,导致营业收入及经营业绩大幅增长。</td>
+            <td data-label="公告日期">2025-04-15</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('600714')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="600714">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-229.16</td>
+                            <td>102.32</td>
+                            <td>126.84</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-639.24</td>
+                            <td>859.03</td>
+                            <td>-219.79</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-1,546.33</td>
+                            <td>1,439.33</td>
+                            <td>107.00</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-86.03</td>
+                            <td>723.85</td>
+                            <td>-637.82</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-473.06</td>
+                            <td>276.83</td>
+                            <td>196.23</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/200771/" target="_blank" class="stock-link">200771</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/200771/" target="_blank" class="stock-link">杭汽轮B</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+467.89%</td>
+            <td data-label="预测值(万元)">2,266.50</td>
+            <td data-label="上年同期值(万元)">-616.09</td>
+            <td data-label="预告类型" class="small-text">扭亏</td>
+            <td data-label="变动原因" class="change-reason small-text">公司报告期内业绩增长,主要系本期销售机组结构变化,毛利率较高的驱动机组实现销售增加,同时本期信用减值损失同比减少。</td>
+            <td data-label="公告日期">2025-04-15</td>
+        </tr>
+        
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002170/" target="_blank" class="stock-link">002170</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002170/" target="_blank" class="stock-link">芭田股份</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+272.73%</td>
+            <td data-label="预测值(万元)">19,440.00</td>
+            <td data-label="上年同期值(万元)">5,215.60</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度磷矿石及其加工的产品销售产生毛利额较多,且肥料产品销售同比增长较多。</td>
+            <td data-label="公告日期">2025-04-15</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('002170')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="002170">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-2,460.69</td>
+                            <td>241.27</td>
+                            <td>2,219.42</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-489.46</td>
+                            <td>2,612.20</td>
+                            <td>-2,122.75</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-3,907.73</td>
+                            <td>2,132.15</td>
+                            <td>1,775.59</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-3,339.91</td>
+                            <td>1,882.80</td>
+                            <td>1,457.12</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-1,014.36</td>
+                            <td>788.37</td>
+                            <td>225.99</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300322/" target="_blank" class="stock-link">300322</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300322/" target="_blank" class="stock-link">硕贝德</a></td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+257.56%</td>
+            <td data-label="预测值(万元)">1,300.00</td>
+            <td data-label="上年同期值(万元)">-825.08</td>
+            <td data-label="预告类型" class="small-text">扭亏</td>
+            <td data-label="变动原因" class="change-reason small-text">报告期内,公司加强市场开拓,聚焦优质客户,天线业务、线束业务、散热组件业务、新能源结构件业务及智能模组业务发展向好,营业收入、净利润均实现同比较大增长,公司整体经营质量逐步好转。</td>
+            <td data-label="公告日期">2025-04-15</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('300322')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="300322">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-1,897.39</td>
+                            <td>4,065.71</td>
+                            <td>-2,168.32</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-1,173.06</td>
+                            <td>134.20</td>
+                            <td>1,038.86</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-2,040.62</td>
+                            <td>5,124.13</td>
+                            <td>-3,083.52</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-21,000.19</td>
+                            <td>14,106.95</td>
+                            <td>6,893.24</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">31,021.86</td>
+                            <td>-13,330.48</td>
+                            <td>-17,691.38</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/601083/" target="_blank" class="stock-link">601083</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/601083/" target="_blank" class="stock-link">锦江航运</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+219.01%</td>
+            <td data-label="预测值(万元)">34,750.00</td>
+            <td data-label="上年同期值(万元)">10,893.25</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度,全球集装箱货量较上年同期增长,受供需影响,2025年一季度中国出口集装箱运价综合指数(CCFI)均值同比上升,东南亚航线运价指数均值同比上涨51.07%。面对外部市场变化,公司把握发展机遇,努力把积极因素转化为发展实绩,稳健东北亚等优势航线;聚力拓展东南亚航线布局,持续打造丝路快航等精品航线,该区域同比实现量价齐升;继续稳步探索南亚、中东等新兴区域,扩展航线网络布局,把握发展先机。2025年第一季度,公司经营发展取得良好开局。</td>
+            <td data-label="公告日期">2025-04-15</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('601083')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="601083">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-3,615.39</td>
+                            <td>5,391.40</td>
+                            <td>-1,776.01</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-3,728.52</td>
+                            <td>4,036.61</td>
+                            <td>-308.08</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-911.22</td>
+                            <td>-132.68</td>
+                            <td>1,043.89</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-1,665.74</td>
+                            <td>1,797.60</td>
+                            <td>-131.86</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">812.90</td>
+                            <td>665.37</td>
+                            <td>-1,478.27</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688103/" target="_blank" class="stock-link">688103</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688103/" target="_blank" class="stock-link">国力股份</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+217.98%</td>
+            <td data-label="预测值(万元)">1,015.00</td>
+            <td data-label="上年同期值(万元)">319.20</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">本次业绩的增长得益于公司不断地开拓新产品、新客户和新市场。公司经过长期的研发投入和技术积累,产品迭代速度较快,产品布局较全面,取得了差异化产品市场竞争优势,公司业务进入了较快的发展阶段。公司始终将客户需求置于首位,以敏锐的市场洞察力,及时开展技术和产品的创新工作,使公司保持较强的市场竞争力和持续盈利能力。业绩变化的具体原因阐述如下:(1)新能源汽车行业高景气度:下游市场需求持续增长,带动公司产品订单量显著提升;(2)核心产品收入快速增长:公司控制盒、继电器等主要产品销售收入同比增速较快,盈利能力增强;(3)成本与费用管控优化:降本增效的效应显现,运营效率提升,进一步推动净利润增长。</td>
+            <td data-label="公告日期">2025-04-15</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('688103')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="688103">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-80.75</td>
+                            <td>-294.88</td>
+                            <td>375.64</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-959.66</td>
+                            <td>866.26</td>
+                            <td>93.40</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-419.54</td>
+                            <td>476.58</td>
+                            <td>-57.04</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-1,006.74</td>
+                            <td>296.49</td>
+                            <td>710.24</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-424.96</td>
+                            <td>96.20</td>
+                            <td>328.76</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002741/" target="_blank" class="stock-link">002741</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002741/" target="_blank" class="stock-link">光华科技</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+763.53%</td>
+            <td data-label="预测值(万元)">2,095.00</td>
+            <td data-label="上年同期值(万元)">242.61</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">报告期内,公司持续加大专用化品板块业务的拓展力度,突破行业重点标杆客户,进一步扩大在公司在专用化学品领域的领先优势。同时,公司持续推进降本增效工作,不断提升产品竞争力,全面提升经营效率,保障了公司的稳步发展。</td>
+            <td data-label="公告日期">2025-04-14</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('002741')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="002741">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-2,786.27</td>
+                            <td>1,935.05</td>
+                            <td>851.21</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-749.56</td>
+                            <td>1,784.47</td>
+                            <td>-1,034.92</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">301.91</td>
+                            <td>376.17</td>
+                            <td>-678.08</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-725.80</td>
+                            <td>1,384.20</td>
+                            <td>-658.40</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-1,560.93</td>
+                            <td>1,767.91</td>
+                            <td>-206.98</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002881/" target="_blank" class="stock-link">002881</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002881/" target="_blank" class="stock-link">美格智能</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+776.64%</td>
+            <td data-label="预测值(万元)">4,470.00</td>
+            <td data-label="上年同期值(万元)">509.90</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">1、报告期内,公司面向智能汽车、5G FWA、海外IoT智能化领域的产品出货量继续高速增长,高算力模组在端侧AI领域的应用持续深入,国内及海外市场均衡发展,带动公司营收规模和净利润大幅增长。2、预计报告期内非经常性损益对当期净利润的影响约为130万元,主要为政府补助。</td>
+            <td data-label="公告日期">2025-04-12</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('002881')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="002881">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-1,718.95</td>
+                            <td>682.16</td>
+                            <td>1,036.79</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">2,659.24</td>
+                            <td>-3,571.38</td>
+                            <td>912.14</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-2,886.29</td>
+                            <td>1,384.06</td>
+                            <td>1,502.23</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">3,728.47</td>
+                            <td>-4,521.60</td>
+                            <td>793.13</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">1,407.78</td>
+                            <td>-175.30</td>
+                            <td>-1,232.48</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002299/" target="_blank" class="stock-link">002299</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002299/" target="_blank" class="stock-link">圣农发展</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+395.65%</td>
+            <td data-label="预测值(万元)">16,800.00</td>
+            <td data-label="上年同期值(万元)">-5,682.41</td>
+            <td data-label="预告类型" class="small-text">扭亏</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度,行业鸡肉价格同比下滑约5%,环比2024年第四季度亦有所下滑,跌至近十年鸡肉价格底部区间。在此背景下,公司稳步推进各项经营战略的落地,实现逆势突破。经初步测算,预计报告期内归属于上市公司股东的净利润1.3亿元-1.6亿元,大幅增长309.94%-358.38%,创公司历史最佳的第一季度盈利水平(剔除2019-2020年因特殊市场环境形成的特殊时期)。面对行业极具挑战的环境,公司基于全渠道策略,凭借优质的服务以及过硬的产品力,展现出持续且稳定的竞争优势,成功打开业务增长空间。特别是在C端零售领域,面对零售行业整体承压的大环境,相关业务仍实现了超30%的同比高速增长。在成本管控方面,新一代自研种鸡“圣泽901Plus”在料肉比等关键指标上持续优化,在公司内部的自用比例不断提升,带动成本持续下行,叠加公司继续推进经营管理的精益化,公司2025年第一季度综合造肉成本对比2024年同期下降约10%。未来,面对复杂多变的外部环境,公司将依托种源自主可控与全产业链布局的独特优势来构建抵御行情波动的坚实壁垒,为公司经营行稳致远提供核心支撑。公司将以今年第一季度的良好开局为新的起点,持续推动公司高质量发展。</td>
+            <td data-label="公告日期">2025-04-12</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('002299')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="002299">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-1,663.39</td>
+                            <td>-280.03</td>
+                            <td>1,943.42</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-6,335.48</td>
+                            <td>4,591.01</td>
+                            <td>1,744.47</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">1,079.77</td>
+                            <td>-3,040.66</td>
+                            <td>1,960.89</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-2,299.69</td>
+                            <td>3,604.77</td>
+                            <td>-1,305.07</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-2,174.16</td>
+                            <td>3,957.03</td>
+                            <td>-1,782.87</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300505/" target="_blank" class="stock-link">300505</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300505/" target="_blank" class="stock-link">川金诺</a></td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+255.76%</td>
+            <td data-label="预测值(万元)">7,250.00</td>
+            <td data-label="上年同期值(万元)">2,037.90</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">1、在2025年一季度,公司抓住市场需求,充分发挥柔性产能的优势,灵活调整生产计划与产品结构,聚焦高毛利产品,同时进一步优化成本管理。通过上述举措,公司营收同比增长,盈利能力进一步增强。2、报告期内,预计非经常性损益对净利润影响金额约为720万元。</td>
+            <td data-label="公告日期">2025-04-12</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('300505')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="300505">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">299.79</td>
+                            <td>-115.20</td>
+                            <td>-184.59</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-2,929.70</td>
+                            <td>2,350.59</td>
+                            <td>579.11</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">2,495.98</td>
+                            <td>-1,141.67</td>
+                            <td>-1,354.30</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-3,778.56</td>
+                            <td>2,850.51</td>
+                            <td>928.05</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">5,246.93</td>
+                            <td>-7,480.99</td>
+                            <td>2,234.06</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/601568/" target="_blank" class="stock-link">601568</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/601568/" target="_blank" class="stock-link">北元集团</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+721.04%</td>
+            <td data-label="预测值(万元)">9,309.50</td>
+            <td data-label="上年同期值(万元)">1,133.63</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">报告期内,公司主要原料电石、煤炭采购价格同比下降,加之主产品烧碱下游产品氧化铝产能上升,烧碱需求增加,销售价格同比上涨,致使公司利润同比增加。</td>
+            <td data-label="公告日期">2025-04-11</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('601568')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="601568">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-928.83</td>
+                            <td>1,275.96</td>
+                            <td>-347.14</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-499.93</td>
+                            <td>1,025.35</td>
+                            <td>-525.41</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">318.26</td>
+                            <td>320.12</td>
+                            <td>-638.39</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">411.67</td>
+                            <td>19.59</td>
+                            <td>-431.26</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-452.10</td>
+                            <td>566.23</td>
+                            <td>-114.13</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000625/" target="_blank" class="stock-link">000625</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000625/" target="_blank" class="stock-link">长安汽车</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+598.30%</td>
+            <td data-label="预测值(万元)">78,000.00</td>
+            <td data-label="上年同期值(万元)">11,169.99</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度,公司归属于上市公司股东的净利润预计13至14亿元,同比增长12.26%至20.89%,扣除非经常性损益后的净利润预计7.3至8.3亿元,同比增长553.54%至643.06%,归属于上市公司股东的净利润及扣除非经常性损益后的净利润同比均实现增长,主要得益于公司坚定推进第三次创业--创新创业计划,品牌向上,产品结构优化,新能源效益改善,海外实现增量增利,自主品牌盈利能力稳中有进。</td>
+            <td data-label="公告日期">2025-04-11</td>
+        </tr>
+        
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/200625/" target="_blank" class="stock-link">200625</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/200625/" target="_blank" class="stock-link">长安B</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+598.30%</td>
+            <td data-label="预测值(万元)">78,000.00</td>
+            <td data-label="上年同期值(万元)">11,169.99</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度,公司归属于上市公司股东的净利润预计13至14亿元,同比增长12.26%至20.89%,扣除非经常性损益后的净利润预计7.3至8.3亿元,同比增长553.54%至643.06%,归属于上市公司股东的净利润及扣除非经常性损益后的净利润同比均实现增长,主要得益于公司坚定推进第三次创业--创新创业计划,品牌向上,产品结构优化,新能源效益改善,海外实现增量增利,自主品牌盈利能力稳中有进。</td>
+            <td data-label="公告日期">2025-04-11</td>
+        </tr>
+        
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688026/" target="_blank" class="stock-link">688026</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688026/" target="_blank" class="stock-link">洁特生物</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+218.52%</td>
+            <td data-label="预测值(万元)">1,350.00</td>
+            <td data-label="上年同期值(万元)">423.83</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度,公司充分发挥自身在研发创新、生产工艺、精细化管理等方面的优势,以市场为导向,依托客户需求,持续提升产品性能和产品竞争力,全力拓展市场份额。公司主营的生命科学制品业务持续增长,市场份额持续提升,同时公司不断推动内部降本增效、智能升级等工作,有效提高生产效率。</td>
+            <td data-label="公告日期">2025-04-11</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('688026')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="688026">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-85.46</td>
+                            <td>165.36</td>
+                            <td>-79.89</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">142.61</td>
+                            <td>8.67</td>
+                            <td>-151.28</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-7.33</td>
+                            <td>100.11</td>
+                            <td>-92.79</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">7.07</td>
+                            <td>-169.61</td>
+                            <td>162.54</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">367.62</td>
+                            <td>117.14</td>
+                            <td>-484.76</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688049/" target="_blank" class="stock-link">688049</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688049/" target="_blank" class="stock-link">炬芯科技</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+603.90%</td>
+            <td data-label="预测值(万元)">3,850.00</td>
+            <td data-label="上年同期值(万元)">546.95</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">一季度虽是行业的传统淡季,报告期内公司厚积薄发,取得了历史上单季度最好的表现,业绩表现甚至超过公司的传统销售旺季。销售额和净利润更是环比、同比皆增长,并创下了单季度的历史新高。报告期内,公司积极拥抱端侧产品AI化的进程,持续投入技术研发并持续迭代新品以及开拓新市场和新客户,经营绩效极为亮眼。公司产品表现非常卓越,端侧AI处理器芯片出货量不断攀升,销售收入保持倍数增长;低延迟高音质无线音频产品加速放量,销售额持续上扬;蓝牙音箱SoC芯片系列持续加大在头部音频品牌的渗透力度,不断深化公司与客户合作的广度和深度,产品不断迭代和放量。同时,公司的产品迭代和客户结构持续优化,实现毛利润和净利润快速成长。报告期内,公司加大研发投入,研发投入约5,100.00万元,同比增长13.34%。公司紧密围绕市场需求动态和技术发展趋势,从架构创新路径出发,已成功研发出CPU+DSP+NPU三核异构的核心架构,并发布集成存内计算NPU的高端蓝牙音箱SoC芯片ATS286X、低延迟高音质无线音频SoC芯片ATS323X、端侧AI处理器芯片ATS362X,目前处于客户导入期,部分客户产品已接近量产发布。同时,公司已着手第二代CIM技术的相关IP研发工作,目标是将NPU单核算力提升三倍至300GOPS,直接支持Transformer模型,能效比提高到7.8TOPS/W@INT8。未来,公司将持续密切关注下游市场需求及创新趋势,不断优化产品矩阵,赋能终端品牌客户在端侧AI领域的应用落地,努力推动公司业绩迈向新的台阶。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('688049')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="688049">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-4,463.24</td>
+                            <td>5,430.60</td>
+                            <td>-967.36</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">2,029.60</td>
+                            <td>-1,991.78</td>
+                            <td>-37.82</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-2,520.06</td>
+                            <td>2,937.75</td>
+                            <td>-417.69</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">192.59</td>
+                            <td>2,060.27</td>
+                            <td>-2,252.87</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-3,208.28</td>
+                            <td>5,606.25</td>
+                            <td>-2,397.97</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002611/" target="_blank" class="stock-link">002611</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002611/" target="_blank" class="stock-link">东方精工</a></td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+525.00%</td>
+            <td data-label="预测值(万元)">27,901.50</td>
+            <td data-label="上年同期值(万元)">4,464.25</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">1.报告期内,公司主营业务智能装备制造板块整体营收稳健增长。其中,国内瓦楞纸包装装备业务单元表现亮眼,营收利润同比大幅增长,“技术领先+国产制造”并举,中高端智能装备产品在国内外市场取得较好销售成绩;海外主要业务单元、子公司Fosber集团经营稳健,报告期内净利润率相较于去年同期有所增长。2.2025年第一季度,公司开展金融资产投资所确认的投资收益相较于去年同期大幅增长,预计非经常性损益金额对净利润的影响金额约为14,557万元002611东方精工2025年第一季度业绩预告~15,611万元。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('002611')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="002611">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-4,189.22</td>
+                            <td>5,773.08</td>
+                            <td>-1,583.85</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">6,521.41</td>
+                            <td>-5,783.23</td>
+                            <td>-738.17</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-2,307.58</td>
+                            <td>3,058.90</td>
+                            <td>-751.32</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">373.19</td>
+                            <td>502.90</td>
+                            <td>-876.09</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-7,790.40</td>
+                            <td>8,371.42</td>
+                            <td>-581.02</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/003002/" target="_blank" class="stock-link">003002</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/003002/" target="_blank" class="stock-link">壶化股份</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+381.48%</td>
+            <td data-label="预测值(万元)">2,100.00</td>
+            <td data-label="上年同期值(万元)">436.16</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度归属于上市公司股东的净利润同比增长,主要原因是山西省内市场逐步恢复,出口和省外市场增幅较大,业务订单明显放量,特别是起爆具销量同比增长464%。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('003002')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="003002">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-478.96</td>
+                            <td>186.97</td>
+                            <td>291.99</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-486.63</td>
+                            <td>295.73</td>
+                            <td>190.90</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-110.91</td>
+                            <td>58.11</td>
+                            <td>52.80</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-1,130.70</td>
+                            <td>299.25</td>
+                            <td>831.45</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">895.49</td>
+                            <td>-1,177.96</td>
+                            <td>282.47</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/001339/" target="_blank" class="stock-link">001339</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/001339/" target="_blank" class="stock-link">智微智能</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+350.86%</td>
+            <td data-label="预测值(万元)">3,580.50</td>
+            <td data-label="上年同期值(万元)">794.16</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">报告期内,公司利润大幅增长主要系公司智算业务需求旺盛,新客户拓展取得成效,在手订单显著增加,后续将按照进度逐步确认收入利润。同时公司积极采取一系列措施加快推进主营业务发展,持续推动降本增效工作,提升研发效率,提高产品竞争力。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('001339')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="001339">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">623.06</td>
+                            <td>-707.38</td>
+                            <td>84.31</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">233.06</td>
+                            <td>-2,101.85</td>
+                            <td>1,868.79</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-1,376.82</td>
+                            <td>428.87</td>
+                            <td>947.95</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">2,303.35</td>
+                            <td>-4,491.89</td>
+                            <td>2,188.55</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">1,006.09</td>
+                            <td>-992.75</td>
+                            <td>-13.34</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300748/" target="_blank" class="stock-link">300748</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300748/" target="_blank" class="stock-link">金力永磁</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+320.00%</td>
+            <td data-label="预测值(万元)">10,297.52</td>
+            <td data-label="上年同期值(万元)">2,455.97</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">2025年第一季度,公司管理层积极开拓市场并同步扩大产能,保持稳健经营。公司持续聚焦新能源和节能环保领域,专注于新能源汽车及汽车零部件、节能变频空调、风力发电、机器人及工业伺服电机、3C、低空飞行器等核心应用领域,并积极配合国际知名科技公司进行具身机器人磁组件研发。本报告期,公司营业收入预计17亿元,同比增长超过10%。2025年第一季度,非经常性损益(税后)约为5,500万元,去年同期非经常性损益(税后)为7,713万元。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('300748')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="300748">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-14,143.76</td>
+                            <td>11,027.06</td>
+                            <td>3,116.70</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">34,311.42</td>
+                            <td>-7,381.68</td>
+                            <td>-26,929.74</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-6,321.57</td>
+                            <td>5,134.55</td>
+                            <td>1,187.02</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">2,223.87</td>
+                            <td>-1,888.17</td>
+                            <td>-335.71</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-8,300.35</td>
+                            <td>8,261.67</td>
+                            <td>38.68</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603236/" target="_blank" class="stock-link">603236</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603236/" target="_blank" class="stock-link">移远通信</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+266.19%</td>
+            <td data-label="预测值(万元)">18,800.00</td>
+            <td data-label="上年同期值(万元)">5,133.89</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">(一)主营业务影响公司专注于为全球物联网客户提供综合解决方案,在5G通信、车载互联、短距离通信及卫星通信等领域持续引领技术前沿。同时,公司聚焦工业智能、智慧农业、AI大模型及边缘计算等应用领域,通过前瞻性布局与深度场景化研发,在通信模组业务及智能化解决方案板块均实现稳健增长。公司预计2025年第一季度可实现营业收入52.00亿元左右,同比增长约31.50%。(二)非经营性损益的影响预计报告期内公司非经常性损益对净利润的影响金额为1,200.00万元左右,主要为收到的补贴。(三)会计处理的影响会计处理对公司本次业绩预告没有重大影响。(四)其他影响公司不存在其他对本次业绩预告构成重大影响的因素。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('603236')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="603236">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-8,118.40</td>
+                            <td>4,832.81</td>
+                            <td>3,285.59</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">5,451.01</td>
+                            <td>-3,252.32</td>
+                            <td>-2,198.69</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-1,719.32</td>
+                            <td>-1,089.10</td>
+                            <td>2,808.41</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">3,785.22</td>
+                            <td>-3,997.61</td>
+                            <td>212.38</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-1,756.37</td>
+                            <td>1,882.63</td>
+                            <td>-126.26</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600268/" target="_blank" class="stock-link">600268</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600268/" target="_blank" class="stock-link">国电南自</a></td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+261.55%</td>
+            <td data-label="预测值(万元)">3,000.00</td>
+            <td data-label="上年同期值(万元)">-1,857.00</td>
+            <td data-label="预告类型" class="small-text">扭亏</td>
+            <td data-label="变动原因" class="change-reason small-text">报告期内,公司利润较上年实现扭亏为盈,主要原因是,公司加强市场开拓力度,持续开展提质增效,公司核心竞争力不断增强,本期主营业务收入较上年同期实现增长。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('600268')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="600268">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-660.08</td>
+                            <td>968.00</td>
+                            <td>-307.91</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">1,628.88</td>
+                            <td>-1,062.17</td>
+                            <td>-566.71</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-120.43</td>
+                            <td>79.25</td>
+                            <td>41.18</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-533.84</td>
+                            <td>874.35</td>
+                            <td>-340.51</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-235.50</td>
+                            <td>511.80</td>
+                            <td>-276.29</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603086/" target="_blank" class="stock-link">603086</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603086/" target="_blank" class="stock-link">先达股份</a></td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+256.23%</td>
+            <td data-label="预测值(万元)">2,150.00</td>
+            <td data-label="上年同期值(万元)">-1,376.20</td>
+            <td data-label="预告类型" class="small-text">扭亏</td>
+            <td data-label="变动原因" class="change-reason small-text">报告期内,公司部分主要产品销量增加和价格上涨导致业绩增长所致。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('603086')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="603086">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">3,979.16</td>
+                            <td>610.09</td>
+                            <td>-4,589.25</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">2,287.74</td>
+                            <td>-1,142.33</td>
+                            <td>-1,145.41</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">2,115.47</td>
+                            <td>-1,029.31</td>
+                            <td>-1,086.17</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">3,218.86</td>
+                            <td>-1,740.18</td>
+                            <td>-1,478.67</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-113.35</td>
+                            <td>514.85</td>
+                            <td>-401.49</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300458/" target="_blank" class="stock-link">300458</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300458/" target="_blank" class="stock-link">全志科技</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+222.60%</td>
+            <td data-label="预测值(万元)">5,600.00</td>
+            <td data-label="上年同期值(万元)">1,735.93</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">1.报告期内,公司在智能汽车电子、扫地机机器人、智能投影等领域积极拓展,实现了营业收入同比增长约50%;2.报告期内,其他非流动金融资产公允价值变动收益约为3,800万元,属于非经常性损益;3.报告期内,预计公司非经常性损益对净利润的影响金额为3,000万元至4,000万元。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('300458')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="300458">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-20,098.73</td>
+                            <td>15,448.42</td>
+                            <td>4,650.31</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">22,912.39</td>
+                            <td>-13,780.77</td>
+                            <td>-9,131.62</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-6,398.91</td>
+                            <td>383.84</td>
+                            <td>6,015.07</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">8,366.54</td>
+                            <td>-8,347.56</td>
+                            <td>-18.98</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-9,872.57</td>
+                            <td>8,833.71</td>
+                            <td>1,038.86</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600673/" target="_blank" class="stock-link">600673</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600673/" target="_blank" class="stock-link">东阳光</a></td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="变动幅度" class="positive-change">+204.44%</td>
+            <td data-label="预测值(万元)">27,900.00</td>
+            <td data-label="上年同期值(万元)">9,164.43</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="变动原因" class="change-reason small-text">1、报告期内,第三代制冷剂(HFCs)作为主流制冷剂,其供给端因配额管控而受限,市场供应格局趋于稳定。与此同时,需求端下游市场用量显著增长。随着2024年配额的快速消耗以及东南亚市场需求的快速增长,供需结构得到深度改善,制冷剂价格同比快速攀升,为公司经营利润的显著提升提供了有力支撑。2、报告期内,数据中心和储能行业的蓬勃发展带动电子元器件市场需求持续复苏。公司的积层箔和化成箔产能稳步释放,规模效应逐步显现,单位生产成本进一步降低。在市场需求增长、产能利用率提升及成本优化的共同驱动下,公司化成箔业务经营利润同比大幅增长,为整体业绩提升提供重要支撑。3、报告期内,公司加速在智算中心液冷领域和人形机器人领域的战略布局,与中际旭创成立合资公司,整合资源,打造从技术研发到市场推广的完整生态体系。同时,公司经过近一年的筹备,与智元机器人及北京大学武汉人工智能研究院等合作方成立光谷东智具身智能机器人子公司,借助公司丰富的产业场景和自动化能力,着力打造强大的机器人数据采集中心,为机器人本体到应用落地打通最后一公里,目前已获得具身智能机器人首批订单,为公司新增长曲线打下坚实基础。4、报告期内,公司通过事业部制变革,强化研产销一体化管理,实现资源高效整合与协同效应最大化。同时,公司全面升级大客户部制度,优化运作机制,构建敏捷市场响应体系,提升资源配置效率和服务水平。通过深入调研大客户需求及行业动态,公司制定针对性销售策略,巩固并拓展战略客户关系,显著增强市场竞争力和整体利润率。</td>
+            <td data-label="公告日期">2025-04-10</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="9" onclick="toggleFundFlow('600673')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="9" style="padding: 0;">
+                    <table class="nested-table" data-stock="600673">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-1,282.88</td>
+                            <td>1,306.31</td>
+                            <td>-23.43</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">23.62</td>
+                            <td>761.94</td>
+                            <td>-785.56</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-752.87</td>
+                            <td>1,097.83</td>
+                            <td>-344.95</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-19.76</td>
+                            <td>345.01</td>
+                            <td>-325.24</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-494.02</td>
+                            <td>534.68</td>
+                            <td>-40.65</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">业绩超预期
+        <span class="date-info">
+            实际业绩期: 2025年03月31日<br>
+            当期预测期: 2025年03月31日<br>
+            上期预测期: 2024年12月31日
+        </span>
+        </h2>
+            <table id="exceed-expect-table">
+                <thead>
+                    <tr>
+                        <th>股票代码</th>
+                        <th>股票名称</th>
+                        <th>上期预测值(万元)</th>
+                        <th>本期实际净利润(万元)</th>
+                        <th>超预期倍数</th>
+                        <th>预告类型</th>
+                        <th>预测指标</th>
+                        <th>公告日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600063/" target="_blank" class="stock-link">600063</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600063/" target="_blank" class="stock-link">皖维高新</a></td>
+            <td data-label="上期预测值(万元)">10,500.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">11,768.06 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.12倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-25</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('600063')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="600063">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-1,310.64</td>
+                            <td>943.13</td>
+                            <td>367.52</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">389.40</td>
+                            <td>470.53</td>
+                            <td>-859.94</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-695.08</td>
+                            <td>1,138.51</td>
+                            <td>-443.43</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">3,348.49</td>
+                            <td>-2,038.80</td>
+                            <td>-1,309.69</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">52.99</td>
+                            <td>-203.43</td>
+                            <td>150.44</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002124/" target="_blank" class="stock-link">002124</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002124/" target="_blank" class="stock-link">ST天邦</a></td>
+            <td data-label="上期预测值(万元)">12,500.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">12,694.16 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.02倍</td>
+            <td data-label="预告类型" class="small-text">预减</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-25</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002124')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002124">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">1,951.31</td>
+                            <td>-967.35</td>
+                            <td>-983.96</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-4,622.57</td>
+                            <td>3,367.57</td>
+                            <td>1,255.00</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">5,230.89</td>
+                            <td>-2,772.75</td>
+                            <td>-2,458.13</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-1,308.19</td>
+                            <td>1,191.43</td>
+                            <td>116.76</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-3,944.21</td>
+                            <td>2,678.20</td>
+                            <td>1,266.01</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000823/" target="_blank" class="stock-link">000823</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/000823/" target="_blank" class="stock-link">超声电子</a></td>
+            <td data-label="上期预测值(万元)">4,150.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">4,177.25 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-25</td>
+        </tr>
+        
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300160/" target="_blank" class="stock-link">300160</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300160/" target="_blank" class="stock-link">秀强股份</a></td>
+            <td data-label="上期预测值(万元)">8,250.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">8,413.04 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.02倍</td>
+            <td data-label="预告类型" class="small-text">略增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-24</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('300160')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="300160">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-505.68</td>
+                            <td>601.30</td>
+                            <td>-95.63</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-531.31</td>
+                            <td>1,025.36</td>
+                            <td>-494.05</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-8.52</td>
+                            <td>398.94</td>
+                            <td>-390.42</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">310.58</td>
+                            <td>-87.47</td>
+                            <td>-223.11</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-300.37</td>
+                            <td>408.13</td>
+                            <td>-107.77</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002290/" target="_blank" class="stock-link">002290</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002290/" target="_blank" class="stock-link">禾盛新材</a></td>
+            <td data-label="上期预测值(万元)">5,050.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">5,095.13 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="公告日期">2025-04-24</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002290')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002290">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">864.36</td>
+                            <td>-660.30</td>
+                            <td>-204.06</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">478.07</td>
+                            <td>-1,332.87</td>
+                            <td>854.80</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">127.83</td>
+                            <td>-715.12</td>
+                            <td>587.30</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">667.62</td>
+                            <td>-822.44</td>
+                            <td>154.82</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">639.48</td>
+                            <td>-1,596.49</td>
+                            <td>957.01</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002741/" target="_blank" class="stock-link">002741</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002741/" target="_blank" class="stock-link">光华科技</a></td>
+            <td data-label="上期预测值(万元)">2,500.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">2,521.32 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-24</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002741')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002741">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-2,786.27</td>
+                            <td>1,935.05</td>
+                            <td>851.21</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-749.56</td>
+                            <td>1,784.47</td>
+                            <td>-1,034.92</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">301.91</td>
+                            <td>376.17</td>
+                            <td>-678.08</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-725.80</td>
+                            <td>1,384.20</td>
+                            <td>-658.40</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-1,560.93</td>
+                            <td>1,767.91</td>
+                            <td>-206.98</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002532/" target="_blank" class="stock-link">002532</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002532/" target="_blank" class="stock-link">天山铝业</a></td>
+            <td data-label="上期预测值(万元)">105,000.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">105,809.30 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">略增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-24</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002532')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002532">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">83.51</td>
+                            <td>606.82</td>
+                            <td>-690.33</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-259.53</td>
+                            <td>-632.70</td>
+                            <td>892.23</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">565.72</td>
+                            <td>-1,210.77</td>
+                            <td>645.05</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-1,953.42</td>
+                            <td>-1,992.94</td>
+                            <td>3,946.35</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-4,659.14</td>
+                            <td>2,567.96</td>
+                            <td>2,091.18</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002838/" target="_blank" class="stock-link">002838</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002838/" target="_blank" class="stock-link">道恩股份</a></td>
+            <td data-label="上期预测值(万元)">4,412.96 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">4,428.44 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.00倍</td>
+            <td data-label="预告类型" class="small-text">略增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-24</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002838')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002838">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">545.47</td>
+                            <td>-2,095.20</td>
+                            <td>1,549.73</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-997.22</td>
+                            <td>771.34</td>
+                            <td>225.88</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-1,198.88</td>
+                            <td>1,225.17</td>
+                            <td>-26.30</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">344.62</td>
+                            <td>894.72</td>
+                            <td>-1,239.35</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-1,817.50</td>
+                            <td>1,854.64</td>
+                            <td>-37.14</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688076/" target="_blank" class="stock-link">688076</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/688076/" target="_blank" class="stock-link">诺泰生物</a></td>
+            <td data-label="上期预测值(万元)">15,000.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">15,261.66 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.02倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">扣除非经常性损益后的净利润</td>
+            <td data-label="公告日期">2025-04-23</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('688076')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="688076">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">114.81</td>
+                            <td>-66.63</td>
+                            <td>-48.18</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">726.46</td>
+                            <td>-286.50</td>
+                            <td>-439.96</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">3,589.97</td>
+                            <td>-4,036.27</td>
+                            <td>446.30</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">1,430.23</td>
+                            <td>-1,490.73</td>
+                            <td>60.50</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">1,889.93</td>
+                            <td>-2,168.41</td>
+                            <td>278.48</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002204/" target="_blank" class="stock-link">002204</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002204/" target="_blank" class="stock-link">大连重工</a></td>
+            <td data-label="上期预测值(万元)">17,750.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">17,943.98 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">略增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-23</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002204')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002204">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-6,024.89</td>
+                            <td>9,894.98</td>
+                            <td>-3,870.08</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">13,037.47</td>
+                            <td>-6,891.43</td>
+                            <td>-6,146.05</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">1,560.95</td>
+                            <td>3,937.23</td>
+                            <td>-5,498.17</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">5,870.59</td>
+                            <td>-6,857.87</td>
+                            <td>987.28</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">9,647.16</td>
+                            <td>-10,999.42</td>
+                            <td>1,352.26</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603086/" target="_blank" class="stock-link">603086</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/603086/" target="_blank" class="stock-link">先达股份</a></td>
+            <td data-label="上期预测值(万元)">2,150.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">2,169.30 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">扭亏</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-23</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('603086')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="603086">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">3,979.16</td>
+                            <td>610.09</td>
+                            <td>-4,589.25</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">2,287.74</td>
+                            <td>-1,142.33</td>
+                            <td>-1,145.41</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">2,115.47</td>
+                            <td>-1,029.31</td>
+                            <td>-1,086.17</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">3,218.86</td>
+                            <td>-1,740.18</td>
+                            <td>-1,478.67</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-113.35</td>
+                            <td>514.85</td>
+                            <td>-401.49</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/605198/" target="_blank" class="stock-link">605198</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/605198/" target="_blank" class="stock-link">安德利</a></td>
+            <td data-label="上期预测值(万元)">8,547.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">8,606.82 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-23</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('605198')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="605198">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-inflow">394.49</td>
+                            <td>-110.58</td>
+                            <td>-283.91</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-138.57</td>
+                            <td>527.49</td>
+                            <td>-388.92</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-1,554.59</td>
+                            <td>274.94</td>
+                            <td>1,279.66</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-740.00</td>
+                            <td>423.67</td>
+                            <td>316.33</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-27.89</td>
+                            <td>-430.85</td>
+                            <td>458.74</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002942/" target="_blank" class="stock-link">002942</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002942/" target="_blank" class="stock-link">新农股份</a></td>
+            <td data-label="上期预测值(万元)">4,150.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">4,171.94 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.01倍</td>
+            <td data-label="预告类型" class="small-text">略增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-23</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002942')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002942">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-122.80</td>
+                            <td>543.69</td>
+                            <td>-420.90</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-258.33</td>
+                            <td>609.32</td>
+                            <td>-350.99</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">186.23</td>
+                            <td>-203.65</td>
+                            <td>17.42</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">13.31</td>
+                            <td>-46.52</td>
+                            <td>33.21</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">4.70</td>
+                            <td>50.66</td>
+                            <td>-55.36</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600989/" target="_blank" class="stock-link">600989</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/600989/" target="_blank" class="stock-link">宝丰能源</a></td>
+            <td data-label="上期预测值(万元)">242,500.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">243,671.74 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.00倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-23</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('600989')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="600989">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-169.27</td>
+                            <td>-2,684.72</td>
+                            <td>2,853.99</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-10,879.71</td>
+                            <td>8,223.94</td>
+                            <td>2,655.77</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">479.93</td>
+                            <td>719.61</td>
+                            <td>-1,199.54</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-1,130.24</td>
+                            <td>3,400.44</td>
+                            <td>-2,270.19</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">1,387.87</td>
+                            <td>-244.72</td>
+                            <td>-1,143.15</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002402/" target="_blank" class="stock-link">002402</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002402/" target="_blank" class="stock-link">和而泰</a></td>
+            <td data-label="上期预测值(万元)">16,900.19 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">16,939.58 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.00倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-23</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002402')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002402">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-3,664.46</td>
+                            <td>3,568.48</td>
+                            <td>95.98</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-6,936.88</td>
+                            <td>5,906.78</td>
+                            <td>1,030.10</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">1,216.89</td>
+                            <td>-869.82</td>
+                            <td>-347.07</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-outflow">-1,373.62</td>
+                            <td>447.08</td>
+                            <td>926.53</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">3,401.39</td>
+                            <td>-5,003.49</td>
+                            <td>1,602.10</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300476/" target="_blank" class="stock-link">300476</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300476/" target="_blank" class="stock-link">胜宏科技</a></td>
+            <td data-label="上期预测值(万元)">88,000.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">92,064.74 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.05倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-22</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('300476')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="300476">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-22,955.16</td>
+                            <td>20,621.95</td>
+                            <td>2,333.21</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-outflow">-57,667.32</td>
+                            <td>33,141.25</td>
+                            <td>24,526.07</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-51,537.60</td>
+                            <td>34,267.57</td>
+                            <td>17,270.03</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">16,887.20</td>
+                            <td>-11,965.09</td>
+                            <td>-4,922.12</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">16,508.77</td>
+                            <td>-15,325.30</td>
+                            <td>-1,183.47</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002311/" target="_blank" class="stock-link">002311</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/002311/" target="_blank" class="stock-link">海大集团</a></td>
+            <td data-label="上期预测值(万元)">125,000.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">128,234.95 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.03倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-22</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('002311')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="002311">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-336.83</td>
+                            <td>-1,043.03</td>
+                            <td>1,379.86</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">6,742.37</td>
+                            <td>-8,878.90</td>
+                            <td>2,136.53</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-inflow">2,095.45</td>
+                            <td>-7,928.51</td>
+                            <td>5,833.06</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">2,614.55</td>
+                            <td>-2,950.77</td>
+                            <td>336.22</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-outflow">-811.28</td>
+                            <td>-1,254.40</td>
+                            <td>2,065.68</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300201/" target="_blank" class="stock-link">300201</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300201/" target="_blank" class="stock-link">海伦哲</a></td>
+            <td data-label="上期预测值(万元)">2,850.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">2,863.85 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.00倍</td>
+            <td data-label="预告类型" class="small-text">略增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-22</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('300201')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="300201">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-1,347.97</td>
+                            <td>924.41</td>
+                            <td>423.56</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">232.66</td>
+                            <td>305.56</td>
+                            <td>-538.23</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-895.13</td>
+                            <td>360.39</td>
+                            <td>534.74</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">115.15</td>
+                            <td>-192.55</td>
+                            <td>77.40</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">593.15</td>
+                            <td>58.87</td>
+                            <td>-652.02</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+        <tr class="stock-main-row">
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300308/" target="_blank" class="stock-link">300308</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/300308/" target="_blank" class="stock-link">中际旭创</a></td>
+            <td data-label="上期预测值(万元)">155,000.00 (2025年03月)</td>
+            <td data-label="本期实际净利润(万元)">158,287.61 (2025年03月)</td>
+            <td data-label="超预期倍数" class="positive-change">1.02倍</td>
+            <td data-label="预告类型" class="small-text">预增</td>
+            <td data-label="预测指标">归属于上市公司股东的净利润</td>
+            <td data-label="公告日期">2025-04-21</td>
+        </tr>
+        
+            <tr class="fund-flow-header">
+                <td colspan="8" onclick="toggleFundFlow('300308')">
+                    最近5日资金流向（万元）
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" style="padding: 0;">
+                    <table class="nested-table" data-stock="300308">
+                        <tr class="fund-flow-data-header">
+                            <td>日期</td>
+                            <td>主力净流入</td>
+                            <td>小单净流入</td>
+                            <td>中单净流入</td>
+                        </tr>
+            
+                        <tr class="fund-flow-row">
+                            <td>2025-04-24</td>
+                            <td class="fund-outflow">-29,615.44</td>
+                            <td>14,338.85</td>
+                            <td>15,276.59</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-23</td>
+                            <td class="fund-inflow">43,811.79</td>
+                            <td>-35,364.14</td>
+                            <td>-8,447.65</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-22</td>
+                            <td class="fund-outflow">-11,502.04</td>
+                            <td>5,043.39</td>
+                            <td>6,458.65</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-21</td>
+                            <td class="fund-inflow">15,378.04</td>
+                            <td>-23,043.56</td>
+                            <td>7,665.52</td>
+                        </tr>
+                
+                        <tr class="fund-flow-row">
+                            <td>2025-04-18</td>
+                            <td class="fund-inflow">16,279.29</td>
+                            <td>-20,481.07</td>
+                            <td>4,201.77</td>
+                        </tr>
+                
+                    </table>
+                </td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

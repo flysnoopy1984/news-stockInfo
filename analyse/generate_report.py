@@ -94,8 +94,8 @@ def get_exceed_area_stocks(current_report_date, query_num, exceed_multiple_confi
         stock_name,
         actual_profit,
         notice_date
-    FROM StockProfit
-    WHERE rn = 1
+    FROM StockProfit 
+    WHERE rn = 1 order by notice_date desc,actual_profit DESC
     """
     
     # 获取预告数据SQL模板，每个股票取预测值最高的一条记录
@@ -242,7 +242,7 @@ def get_high_change_stocks(report_date, config):
         change_reason, 
         notice_date
     FROM RankedStocks 
-    WHERE rn = 1
+    WHERE rn = 1 
     """
     
     params = [report_date, multiple_low]
@@ -250,7 +250,7 @@ def get_high_change_stocks(report_date, config):
         sql += " AND change_rate <= %s"
         params.append(multiple_high)
     
-    sql += " ORDER BY change_rate DESC LIMIT %s"
+    sql += "  ORDER BY notice_date desc,change_rate desc LIMIT %s"
     params.append(query_num)
     
     final_sql = db_manager.cursor.mogrify(sql, tuple(params))

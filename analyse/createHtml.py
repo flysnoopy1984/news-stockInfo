@@ -182,8 +182,8 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
         # 添加主行（加入stock-main-row类）
         high_change_rows += f"""
         <tr class="stock-main-row">
-            <td data-label="股票代码"><a href="https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
-            <td data-label="股票名称"><a href="https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
             <td data-label="预测指标">{stock['2']}</td>
             <td data-label="变动幅度" class="{change_class}">{float(stock['3']):+.2f}%</td>
             <td data-label="预测值(万元)">{format_number(stock['4'])}</td>
@@ -238,8 +238,8 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
         exceed_rate = float(stock['4'])
         exceed_rows += f"""
         <tr class="stock-main-row">
-            <td data-label="股票代码"><a href="https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
-            <td data-label="股票名称"><a href="https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
+            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
+            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
             <td data-label="上期预测值(万元)">{format_number(stock['2'])} ({stock['7'][:4]}年{stock['7'][4:6]}月)</td>
             <td data-label="本期实际净利润(万元)">{format_number(stock['3'])} ({stock['8'][:4]}年{stock['8'][4:6]}月)</td>
             <td data-label="超预期倍数" class="positive-change">{exceed_rate:.2f}倍</td>
