@@ -29,6 +29,10 @@ def load_config():
             'low': float(os.getenv('EXCEED_MULTIPLE_LOW', 2)),
             'high': float(os.getenv('EXCEED_MULTIPLE_HIGH', 5))
         },
+        'netProfitYoy': {
+            'low': float(os.getenv('NET_PROFIT_YOY_LOW', 200)),  # 默认200%
+            'high': float(os.getenv('NET_PROFIT_YOY_HIGH', 1000))  # 默认1000%
+        },
         'queryDate': os.getenv('QUERY_DATE', 'auto')
     }
 
@@ -260,6 +264,53 @@ def get_high_change_stocks(report_date, config):
     logging.info(f"查询结果: {len(results)}条记录")
     return results
 
+def get_high_profit_growth_stocks(report_date, config):
+    """获取净利润同比增长在指定范围内的股票
+    
+    Args:
+        report_date (str): 报告期日期，格式为YYYYMMDD
+        config (dict): 配置参数字典
+        
+    Returns:
+        List[Tuple]: 符合条件的股票列表
+    """
+    logging.info(f"\n=== 净利润同比增长分析 ===")
+    logging.info(f"分析期: {report_date}")
+    
+    # 配置参数
+    yoy_low = config['netProfitYoy']['low']  # 百分比值，如200表示200%
+    yoy_high = config['netProfitYoy']['high']  # 百分比值，如1000表示1000%
+    query_num = config['queryNum']
+    
+    logging.info(f"- 净利润同比增长范围: {yoy_low}%~{yoy_high}%")
+    logging.info(f"- 返回记录数限制: {query_num}")
+    
+    sql = """
+    SELECT 
+        stock_code, 
+        stock_name,
+        net_profit,
+        net_profit_yoy,
+        notice_date
+    FROM stock_report
+    WHERE report_date = %s
+    AND net_profit > 0
+    AND net_profit_yoy BETWEEN %s AND %s
+    ORDER BY notice_date DESC, net_profit_yoy DESC
+    LIMIT %s
+    """
+    
+    try:
+        db_manager.execute(sql, (report_date, yoy_low, yoy_high, query_num))
+        results = db_manager.fetchall()
+        logging.info(f"查询结果: {len(results)}条记录")
+        return results
+    except Exception as e:
+        logging.error(f"执行SQL出错: {e}")
+        import traceback
+        logging.error(traceback.format_exc())
+        return []
+
 def get_stock_fund_flow(stock_code):
     """获取单个股票的资金流数据"""
     try:
@@ -319,6 +370,10 @@ def main():
         exceed_area_stocks, current_report_date, report_info = get_exceed_area_stocks(exceed_date, config['queryNum'], config['exceedMultiple'])
         exceed_area_stocks_with_fund = add_fund_flow_data(exceed_area_stocks)
         
+        # 净利润同比增长分析
+        high_profit_growth_stocks = get_high_profit_growth_stocks(exceed_date, config)
+        high_profit_growth_stocks_with_fund = add_fund_flow_data(high_profit_growth_stocks)
+        
         # prev_period_date = get_prev_period_date(actual_report_date if actual_report_date else exceed_date)
         # 使用新的HTML生成模块
         output_path = createHtml.generate_html_report(
@@ -327,6 +382,7 @@ def main():
             # prev_period_date=prev_period_date,
             high_change_stocks=high_change_stocks_with_fund,
             exceed_area_stocks=exceed_area_stocks_with_fund,
+            high_profit_growth_stocks=high_profit_growth_stocks_with_fund,  # 添加净利润同比增长股票数据
             exceed_area_report_info=report_info,
             query_date=config['queryDate']  # 传递queryDate配置
         )
