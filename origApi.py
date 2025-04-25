@@ -1,6 +1,8 @@
 import akshare as ak
 
 stockCode = '000039'
+
+
 #业绩预告
 def getPreData():
 
@@ -37,5 +39,11 @@ def singleAmountFlow():
     sorted_df = stock_individual_fund_flow_df.sort_values(by='日期', ascending=False).head(5)
     print(sorted_df)
 
+def dongFangCaiFu_News():
+    '东方财富新闻'
+    stock_info_cjzc_em_df = ak.stock_info_cjzc_em()
+    
+    print(stock_info_cjzc_em_df)
+
 if __name__ == "__main__":
-  getPreData()
+  dongFangCaiFu_News()

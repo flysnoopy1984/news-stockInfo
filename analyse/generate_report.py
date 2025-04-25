@@ -315,9 +315,11 @@ def main():
         high_change_stocks = get_high_change_stocks(prereport_date, config)
         high_change_stocks_with_fund = add_fund_flow_data(high_change_stocks)
         
-        # 实际业绩报告
+        # 实际业绩和预测比较报告
         exceed_area_stocks, current_report_date, report_info = get_exceed_area_stocks(exceed_date, config['queryNum'], config['exceedMultiple'])
         exceed_area_stocks_with_fund = add_fund_flow_data(exceed_area_stocks)
+
+     
         
         # prev_period_date = get_prev_period_date(actual_report_date if actual_report_date else exceed_date)
         # 使用新的HTML生成模块
