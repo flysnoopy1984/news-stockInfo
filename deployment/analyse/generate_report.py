@@ -89,6 +89,7 @@ def get_exceed_area_stocks(current_report_date, query_num, exceed_multiple_confi
             stock_name,
             net_profit as actual_profit,
             notice_date,
+            net_profit_yoy,  -- 添加净利润同比增长字段
             ROW_NUMBER() OVER(PARTITION BY stock_code ORDER BY net_profit DESC) as rn
         FROM stock_report 
         WHERE report_date = %s
@@ -97,7 +98,8 @@ def get_exceed_area_stocks(current_report_date, query_num, exceed_multiple_confi
         stock_code,
         stock_name,
         actual_profit,
-        notice_date
+        notice_date,
+        net_profit_yoy  -- 在SELECT中也添加该字段
     FROM StockProfit 
     WHERE rn = 1 order by notice_date desc,actual_profit DESC
     """
@@ -178,6 +180,7 @@ def get_exceed_area_stocks(current_report_date, query_num, exceed_multiple_confi
                 used_prereport_date = current_report_date if stock_code in current_prereports else prev_prereport_date
                 
                 exceed_rate = report[2] / prereport[2]  # actual_profit / predict_value
+                net_profit_yoy = report[4] if len(report) > 4 and report[4] is not None else None  # 获取净利润同比增长率
                 all_exceed_stocks.append((
                     stock_code,            # stock_code
                     report[1],             # stock_name
@@ -187,8 +190,9 @@ def get_exceed_area_stocks(current_report_date, query_num, exceed_multiple_confi
                     prereport[3],          # predict_type
                     prereport[4],          # predict_indicator
                     used_prereport_date,   # 预测值对应期间
-                    current_report_date,    # 实际业绩期间
-                    report[3]              # notice_date
+                    current_report_date,   # 实际业绩期间
+                    report[3],             # notice_date
+                    net_profit_yoy         # 净利润同比增长率
                 ))
         
         # 先按公告日期降序排序，再按超预期倍数降序排序
@@ -366,10 +370,10 @@ def main():
         high_change_stocks = get_high_change_stocks(prereport_date, config)
         high_change_stocks_with_fund = add_fund_flow_data(high_change_stocks)
         
-        # 实际业绩报告
+        # 实际业绩和预测比较报告
         exceed_area_stocks, current_report_date, report_info = get_exceed_area_stocks(exceed_date, config['queryNum'], config['exceedMultiple'])
         exceed_area_stocks_with_fund = add_fund_flow_data(exceed_area_stocks)
-        
+
         # 净利润同比增长分析
         high_profit_growth_stocks = get_high_profit_growth_stocks(exceed_date, config)
         high_profit_growth_stocks_with_fund = add_fund_flow_data(high_profit_growth_stocks)

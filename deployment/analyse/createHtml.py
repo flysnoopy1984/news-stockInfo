@@ -12,7 +12,7 @@ def format_number(number):
         return "0"
     return format(number / 10000, ',.2f')
 
-def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed_area_stocks, exceed_area_report_info=None, query_date='auto'):
+def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed_area_stocks, high_profit_growth_stocks=None, exceed_area_report_info=None, query_date='auto'):
     """生成HTML报告"""
     logging.info("开始生成HTML报告...")
     template_path = os.path.join(os.path.dirname(__file__), 'performance_analysis.html')
@@ -29,7 +29,7 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
     # 替换表格标题中的日期
     html_content = html_content.replace(
         '<h2 class="section-title">业绩预告变动</h2>',
-        f'<h2 class="section-title">业绩预告变动<span class="date-info">业绩预告分析期: {formatted_prereport_date}</span></h2>'
+        f'<h2 class="section-title" data-table="high-change-table">业绩预告变动<span class="date-info">业绩预告分析期: {formatted_prereport_date}</span></h2>'
     )
     
     exceed_area_dates = ""
@@ -43,7 +43,7 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
         """
     html_content = html_content.replace(
         '<h2 class="section-title">业绩预告超预期股票</h2>',
-        f'<h2 class="section-title">业绩超预期{exceed_area_dates}</h2>'
+        f'<h2 class="section-title" data-table="exceed-expect-table">业绩超预期{exceed_area_dates}</h2>'
     )
     
     # 移除原有的日期显示区域
@@ -172,8 +172,68 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
     </script>
     """
 
+    # 为section-title添加点击功能的CSS和JavaScript
+    section_toggle_scripts = """
+    <style>
+    /* 为section-title添加可点击样式 */
+    .section-title {
+        cursor: pointer;
+        position: relative;
+        padding-right: 30px; /* 为图标留出空间 */
+    }
+
+    /* 添加展开/折叠指示器 */
+    .section-title:after {
+        content: '▼';
+        position: absolute;
+        right: 15px;
+        transition: transform 0.3s;
+    }
+
+    .section-title.collapsed:after {
+        transform: rotate(-90deg);
+    }
+
+    /* 表格的显示/隐藏过渡效果 */
+    table.section-table {
+        transition: all 0.3s;
+        overflow: hidden;
+        display: table;
+    }
+
+    table.section-table.collapsed {
+        display: none;
+    }
+    </style>
+    <script>
+    // 切换section内容的显示/隐藏
+    function toggleSection(tableId) {
+        const title = document.querySelector(`h2[data-table="${tableId}"]`);
+        const table = document.getElementById(tableId);
+        
+        if (title && table) {
+            title.classList.toggle('collapsed');
+            table.classList.toggle('collapsed');
+        }
+    }
+
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 为每个section-title添加点击事件
+        document.querySelectorAll('.section-title').forEach(title => {
+            const tableId = title.getAttribute('data-table');
+            if (tableId) {
+                title.addEventListener('click', function() {
+                    toggleSection(tableId);
+                });
+            }
+        });
+    });
+    </script>
+    """
+
     # 添加新样式和JavaScript
-    html_content = html_content.replace('</head>', f'{additional_styles}\n</head>')
+    html_content = html_content.replace('</head>', f'{additional_styles}\n{section_toggle_scripts}\n</head>')
 
     logging.info("生成业绩变动股票数据行...")
     high_change_rows = ""
@@ -182,8 +242,8 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
         # 添加主行（加入stock-main-row类）
         high_change_rows += f"""
         <tr class="stock-main-row">
-            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
-            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
+            <td data-label="股票代码"><a href="https://www.kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
+            <td data-label="股票名称"><a href="https://www.kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
             <td data-label="预测指标">{stock['2']}</td>
             <td data-label="变动幅度" class="{change_class}">{float(stock['3']):+.2f}%</td>
             <td data-label="预测值(万元)">{format_number(stock['4'])}</td>
@@ -236,13 +296,24 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
     exceed_rows = ""
     for stock in exceed_area_stocks:
         exceed_rate = float(stock['4'])
+        
+        # 处理净利润同比增长率
+        net_profit_yoy_class = ""
+        net_profit_yoy_display = "-"
+        
+        if '10' in stock and stock['10'] is not None:
+            net_profit_yoy = float(stock['10'])
+            net_profit_yoy_display = f"{net_profit_yoy:+.2f}%" if net_profit_yoy != 0 else "0.00%"
+            net_profit_yoy_class = "positive-change" if net_profit_yoy > 0 else "negative-change"
+            
         exceed_rows += f"""
         <tr class="stock-main-row">
-            <td data-label="股票代码"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
-            <td data-label="股票名称"><a href="http://kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
+            <td data-label="股票代码"><a href="https://www.kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
+            <td data-label="股票名称"><a href="https://www.kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
             <td data-label="上期预测值(万元)">{format_number(stock['2'])} ({stock['7'][:4]}年{stock['7'][4:6]}月)</td>
             <td data-label="本期实际净利润(万元)">{format_number(stock['3'])} ({stock['8'][:4]}年{stock['8'][4:6]}月)</td>
             <td data-label="超预期倍数" class="positive-change">{exceed_rate:.2f}倍</td>
+            <td data-label="净利润同比增长" class="{net_profit_yoy_class}">{net_profit_yoy_display}</td>
             <td data-label="预告类型" class="small-text">{stock['5'] or ''}</td>
             <td data-label="预测指标">{stock['6']}</td>
             <td data-label="公告日期">{stock['9']}</td>
@@ -253,12 +324,12 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
         if fund_flow is not None and not fund_flow.empty:
             exceed_rows += f"""
             <tr class="fund-flow-header">
-                <td colspan="8" onclick="toggleFundFlow('{stock['0']}')">
+                <td colspan="9" onclick="toggleFundFlow('{stock['0']}')">
                     最近5日资金流向（万元）
                 </td>
             </tr>
             <tr>
-                <td colspan="8" style="padding: 0;">
+                <td colspan="9" style="padding: 0;">
                     <table class="nested-table" data-stock="{stock['0']}">
                         <tr class="fund-flow-data-header">
                             <td>日期</td>
@@ -286,6 +357,23 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
             """
     
     logging.info("替换表格内容...")
+    # 添加id属性和section-table类到表格
+    html_content = html_content.replace(
+        '<table id="high-change-table">',
+        '<table id="high-change-table" class="section-table">'
+    )
+    # 修改业绩超预期表格的表头，添加净利润同比增长列
+    html_content = html_content.replace(
+        '<table id="exceed-expect-table">',
+        '<table id="exceed-expect-table" class="section-table">'
+    )
+    
+    # 在表头添加净利润同比增长列
+    html_content = html_content.replace(
+        '<tr>\n                        <th>股票代码</th>\n                        <th>股票名称</th>\n                        <th>上期预测值(万元)</th>\n                        <th>本期实际净利润(万元)</th>\n                        <th>超预期倍数</th>\n                        <th>预告类型</th>\n                        <th>预测指标</th>\n                        <th>公告日期</th>\n                    </tr>',
+        '<tr>\n                        <th>股票代码</th>\n                        <th>股票名称</th>\n                        <th>上期预测值(万元)</th>\n                        <th>本期实际净利润(万元)</th>\n                        <th>超预期倍数</th>\n                        <th>净利润同比增长</th>\n                        <th>预告类型</th>\n                        <th>预测指标</th>\n                        <th>公告日期</th>\n                    </tr>'
+    )
+    
     html_content = html_content.replace(
         '<!-- 数据将通过Python脚本动态生成 -->', 
         high_change_rows if high_change_stocks else "<tr><td colspan='9'>没有找到符合条件的数据</td></tr>", 
@@ -293,9 +381,92 @@ def generate_html_report(prereport_date, exceed_date, high_change_stocks, exceed
     )
     html_content = html_content.replace(
         '<!-- 数据将通过Python脚本动态生成 -->', 
-        exceed_rows if exceed_area_stocks else "<tr><td colspan='8'>没有找到符合条件的数据</td></tr>", 
+        exceed_rows if exceed_area_stocks else "<tr><td colspan='9'>没有找到符合条件的数据</td></tr>", 
         1
     )
+    
+    # 添加净利润同比增长表格部分
+    if high_profit_growth_stocks:
+        logging.info("生成净利润同比增长数据行...")
+        
+        # 在最后一个section后添加新的表格部分
+        high_profit_growth_section = f"""
+        <div class="section">
+            <h2 class="section-title" data-table="high-profit-growth-table">净利润同比增长<span class="date-info">报告期: {formatted_exceed_date}</span></h2>
+            <table id="high-profit-growth-table" class="section-table">
+                <thead>
+                    <tr>
+                        <th>股票代码</th>
+                        <th>股票名称</th>
+                        <th>净利润(万元)</th>
+                        <th>同比增长率</th>
+                        <th>公告日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+        
+        growth_rows = ""
+        for stock in high_profit_growth_stocks:
+            net_profit = float(stock['2']) if stock.get('2') is not None else 0
+            growth_rate = float(stock['3']) if stock.get('3') is not None else 0
+            
+            growth_rows += f"""
+            <tr class="stock-main-row">
+                <td data-label="股票代码"><a href="https://www.kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['0']}</a></td>
+                <td data-label="股票名称"><a href="https://www.kakasong.cn/webview?url=https://stockpage.10jqka.com.cn/{stock['0']}/" target="_blank" class="stock-link">{stock['1']}</a></td>
+                <td data-label="净利润(万元)">{format_number(net_profit)}</td>
+                <td data-label="同比增长率" class="positive-change">{growth_rate:+.2f}%</td>
+                <td data-label="公告日期">{stock['4'] if stock.get('4') else ''}</td>
+            </tr>
+            """
+            
+            # 添加资金流数据
+            fund_flow = stock.get('fund_flow')
+            if fund_flow is not None and not fund_flow.empty:
+                growth_rows += f"""
+                <tr class="fund-flow-header">
+                    <td colspan="5" onclick="toggleFundFlow('{stock['0']}_growth')">
+                        最近5日资金流向（万元）
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5" style="padding: 0;">
+                        <table class="nested-table" data-stock="{stock['0']}_growth">
+                            <tr class="fund-flow-data-header">
+                                <td>日期</td>
+                                <td>主力净流入</td>
+                                <td>小单净流入</td>
+                                <td>中单净流入</td>
+                            </tr>
+                """
+                
+                for _, row in fund_flow.iterrows():
+                    inflow_class = "fund-inflow" if row['主力净流入-净额'] > 0 else "fund-outflow"
+                    growth_rows += f"""
+                            <tr class="fund-flow-row">
+                                <td>{row['日期']}</td>
+                                <td class="{inflow_class}">{format_number(row['主力净流入-净额'])}</td>
+                                <td>{format_number(row['小单净流入-净额'])}</td>
+                                <td>{format_number(row['中单净流入-净额'])}</td>
+                            </tr>
+                    """
+                
+                growth_rows += """
+                        </table>
+                    </td>
+                </tr>
+                """
+        
+        high_profit_growth_section += growth_rows if growth_rows else "<tr><td colspan='5'>没有找到符合条件的数据</td></tr>"
+        high_profit_growth_section += """
+                </tbody>
+            </table>
+        </div>
+        """
+        
+        # 在最后一个section后添加新的section
+        html_content = html_content.replace('</div>\n    </div>\n</body>', f'</div>\n    {high_profit_growth_section}\n    </div>\n</body>')
     
     # 根据query_date决定使用当前日期还是预告日期
     if query_date.lower() == 'auto':
