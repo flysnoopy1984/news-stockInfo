@@ -45,5 +45,16 @@ def dongFangCaiFu_News():
     
     print(stock_info_cjzc_em_df)
 
+def guDong_zengChi():
+    stock_ggcg_em_df = ak.stock_ggcg_em(symbol="全部")
+    print(stock_ggcg_em_df.info())
+    print(stock_ggcg_em_df[stock_ggcg_em_df["代码"] == "300199"])
+
+def gaiNianBanKuai():
+    '''同花顺-板块-概念板块-板块简介'''
+    df = ak.stock_board_concept_name_ths()
+    print(df.info())
+    print(df)
+
 if __name__ == "__main__":
-  dongFangCaiFu_News()
+  gaiNianBanKuai()

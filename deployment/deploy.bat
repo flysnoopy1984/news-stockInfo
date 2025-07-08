@@ -5,7 +5,7 @@ cd ..
 echo Starting deployment from %CD%...
 
 rem 创建必要的目录
-mkdir "deployment\db" 2>nul
+mkdir "deployment\api" 2>nul
 mkdir "deployment\db\pre" 2>nul
 mkdir "deployment\db\report" 2>nul
 mkdir "deployment\log" 2>nul
@@ -15,8 +15,10 @@ mkdir "deployment\analyse\htmls" 2>nul
 rem 复制主要执行文件
 copy /Y "xxlJobRun.py" "deployment\"
 
+rem 复制API文件
+copy /Y "api\miniApi.py" "deployment\api\"
+
 rem 复制数据库相关文件
-copy /Y "db\.env" "deployment\db\"
 copy /Y "db\db_manager.py" "deployment\db\"
 copy /Y "db\pre\*.py" "deployment\db\pre\"
 copy /Y "db\report\*.py" "deployment\db\report\"
@@ -26,11 +28,6 @@ copy /Y "log\logger.py" "deployment\log\"
 
 rem 复制分析相关文件
 echo Copying analysis files...
-@REM if exist "analyse\.env" (
-@REM     copy /Y "analyse\.env" "deployment\analyse\" && echo Copied .env
-@REM ) else (
-@REM     echo Warning: .env not found
-@REM )
 copy /Y "analyse\date_utils.py" "deployment\analyse\" && echo Copied date_utils.py
 copy /Y "analyse\generate_report.py" "deployment\analyse\" && echo Copied generate_report.py
 copy /Y "analyse\createHtml.py" "deployment\analyse\" && echo Copied createHtml.py

@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 import pathlib
 import logging
 
+# 确保环境变量已加载，无论模块导入顺序如何
+load_dotenv()
+
 class DBManager:
     """
     数据库管理类，负责数据库连接、关闭等操作
@@ -28,9 +31,7 @@ class DBManager:
         if self._initialized:
             return
             
-        # 加载.env文件中的环境变量
-        env_path = pathlib.Path(__file__).parent / '.env'
-        load_dotenv(dotenv_path=env_path)
+        # 环境变量已在模块级别加载
         
         # 设置数据库连接参数
         self.host = os.getenv('DB_HOST', 'localhost')
@@ -97,9 +98,24 @@ class DBManager:
         try:
             if not self.conn or not self.cursor:
                 self.connect()
+            
+            # 打印完整SQL语句（带参数）
             if params:
+                # 使用mogrify获取带参数的完整SQL
+                try:
+                    final_sql = self.cursor.mogrify(sql, params)
+                    # 如果是字节对象，则解码为字符串
+                    if isinstance(final_sql, bytes):
+                        final_sql = final_sql.decode('utf-8')
+                    logging.info(f"执行SQL: {final_sql}")
+                except Exception as e:
+                    # 如果mogrify失败，只打印原始SQL
+                    logging.info(f"执行SQL(参数未填充): {sql}")
+                    logging.info(f"参数: {params}")
+                
                 self.cursor.execute(sql, params)
             else:
+                logging.info(f"执行SQL: {sql}")
                 self.cursor.execute(sql)
             return True
         except Exception as e:

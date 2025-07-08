@@ -1,6 +1,6 @@
 import sys
 import os
-
+import dotenv
 from datetime import datetime
 import traceback
 
@@ -19,6 +19,9 @@ from db.pre.main_preReport import process_preReport_data
 from analyse.date_utils import get_next_quarter_end, get_prev_quarter_end,get_prev_prev_quarter_end
 from analyse.generate_report import main as generate_report_main
 
+from api.miniApi import send_user_sub_message
+ 
+dotenv.load_dotenv()
 # 使用内置的logging模块记录启动信息
 logging.info("xxlJobRun启动")
 
@@ -146,17 +149,24 @@ def _generate_report():
         logging.error(traceback.format_exc())
 
 if __name__ == "__main__":
+
+    """加载.env配置文件"""
+
+
     # 从命令行参数获取日期
 
     date_param = sys.argv[1] if len(sys.argv) > 1 else None
     
     # 执行处理
     report_result, prereport_result = process_daily_report(date_param)
+
+   
     
     # 根据处理结果设置退出码
     if not report_result or not prereport_result:
         logging.error("任务执行失败")
         sys.exit(1)
-    
+
+    send_user_sub_message()
     logging.info("任务已成功执行")
     sys.exit(0)
